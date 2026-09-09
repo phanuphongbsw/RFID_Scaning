@@ -1,0 +1,63 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}จัดการสินค้า — ร้านเสื้อผ้า{% endblock %}
+
+{% block admin_content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">จัดการสินค้า</h1>
+    <a href="{{ url_for('admin_product_add') }}" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl transition text-sm font-medium">
+        + เพิ่มสินค้า
+    </a>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-gray-500 border-b border-gray-100 bg-gray-50">
+                    <th class="px-6 py-4 font-medium">รูป</th>
+                    <th class="px-6 py-4 font-medium">ชื่อสินค้า</th>
+                    <th class="px-6 py-4 font-medium">ราคา</th>
+                    <th class="px-6 py-4 font-medium">คงเหลือ</th>
+                    <th class="px-6 py-4 font-medium">สถานะ</th>
+                    <th class="px-6 py-4 font-medium">จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr class="border-b border-gray-50 hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        <img src="{{ product.image | product_image }}" alt="{{ product.name }}"
+                             class="w-12 h-12 rounded-lg object-cover bg-gray-100"
+                             onerror="this.src='https://placehold.co/48x48/e2e8f0/64748b?text=Img'">
+                    </td>
+                    <td class="px-6 py-4 font-medium text-gray-800">{{ product.name }}</td>
+                    <td class="px-6 py-4">฿{{ "%.2f"|format(product.price) }}</td>
+                    <td class="px-6 py-4">{{ product.stock }}</td>
+                    <td class="px-6 py-4">
+                        {% if product.is_active %}
+                        <span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">เปิดขาย</span>
+                        {% else %}
+                        <span class="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-500">ปิดขาย</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex gap-2">
+                            <a href="{{ url_for('admin_product_edit', product_id=product.id) }}"
+                               class="text-brand-600 hover:text-brand-700 text-sm">แก้ไข</a>
+                            <form action="{{ url_for('admin_product_delete', product_id=product.id) }}" method="POST"
+                                  onsubmit="return confirm('ต้องการลบสินค้านี้?')">
+                                <button type="submit" class="text-red-500 hover:text-red-700 text-sm">ลบ</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-gray-400">ยังไม่มีสินค้า</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

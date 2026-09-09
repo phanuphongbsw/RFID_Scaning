@@ -1,0 +1,205 @@
+{% extends "admin/base_admin.html" %}
+
+
+{% block title %}
+จัดการหมวดหมู่
+{% endblock %}
+
+
+{% block admin_content %}
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<div class="flex justify-between items-center mb-6">
+
+    <div>
+
+        <h1 class="text-3xl font-bold">
+
+            จัดการหมวดหมู่สินค้า
+
+        </h1>
+
+        <p class="text-gray-500 mt-1">
+
+            เพิ่ม แก้ไข และลบหมวดหมู่สินค้า
+
+        </p>
+
+    </div>
+
+
+    <a
+        href="{{ url_for('admin_category_add') }}"
+        class="bg-blue-600 hover:bg-blue-700
+               text-white px-5 py-3 rounded-lg"
+    >
+
+        + เพิ่มหมวดหมู่
+
+    </a>
+
+</div>
+
+
+
+<!-- =====================================================
+     CATEGORY TABLE
+===================================================== -->
+
+<div class="bg-white rounded-xl shadow border overflow-hidden">
+
+    <div class="overflow-x-auto">
+
+        <table class="w-full">
+
+
+            <!-- TABLE HEADER -->
+
+            <thead class="bg-gray-100">
+
+                <tr>
+
+                    <th class="text-left px-6 py-4">
+                        ID
+                    </th>
+
+                    <th class="text-left px-6 py-4">
+                        ชื่อหมวดหมู่
+                    </th>
+
+                    <th class="text-center px-6 py-4">
+                        จำนวนสินค้า
+                    </th>
+
+                    <th class="text-center px-6 py-4">
+                        จัดการ
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+
+            <!-- TABLE BODY -->
+
+            <tbody>
+
+                {% for category in categories %}
+
+                <tr class="border-t hover:bg-gray-50">
+
+
+                    <!-- ID -->
+
+                    <td class="px-6 py-4">
+
+                        {{ category.id }}
+
+                    </td>
+
+
+
+                    <!-- NAME -->
+
+                    <td class="px-6 py-4 font-medium">
+
+                        {{ category.name }}
+
+                    </td>
+
+
+
+                    <!-- PRODUCT COUNT -->
+
+                    <td class="px-6 py-4 text-center">
+
+                        {{ category.products|length }}
+
+                    </td>
+
+
+
+                    <!-- ACTIONS -->
+
+                    <td class="px-6 py-4 text-center">
+
+                        <a
+                            href="{{ url_for(
+                                'admin_category_edit',
+                                category_id=category.id
+                            ) }}"
+                            class="text-blue-600 hover:underline"
+                        >
+
+                            แก้ไข
+
+                        </a>
+
+
+                        <span class="mx-2 text-gray-400">
+                            |
+                        </span>
+
+
+                        <form
+                            action="{{ url_for(
+                                'admin_category_delete',
+                                category_id=category.id
+                            ) }}"
+                            method="POST"
+                            class="inline"
+                        >
+
+                            <button
+                                type="submit"
+                                onclick="return confirm(
+                                    'ต้องการลบหมวดหมู่นี้หรือไม่?'
+                                )"
+                                class="text-red-600 hover:underline"
+                            >
+
+                                ลบ
+
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <!-- EMPTY -->
+
+                <tr>
+
+                    <td
+                        colspan="4"
+                        class="px-6 py-10 text-center text-gray-500"
+                    >
+
+                        ยังไม่มีหมวดหมู่สินค้า
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+{% endblock %}

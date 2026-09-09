@@ -1,0 +1,33 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}ตั้งค่าชำระเงิน — Backoffice{% endblock %}
+
+{% block admin_content %}
+<h1 class="text-2xl font-bold text-gray-800 mb-6">ตั้งค่าชำระเงิน PromptPay</h1>
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-2xl">
+    <form method="POST" enctype="multipart/form-data" class="space-y-5">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อบัญชี / ชื่อร้าน</label>
+            <input type="text" name="promptpay_name" value="{{ settings.promptpay_name }}"
+                   class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                   placeholder="เช่น ร้านเสื้อผ้า">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์ PromptPay</label>
+            <input type="text" name="promptpay_number" value="{{ settings.promptpay_number }}"
+                   class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                   placeholder="เช่น 0812345678">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">รูป QR Code</label>
+            <img src="{{ settings.qr_image | product_image }}" alt="QR" class="w-32 h-32 object-contain border rounded-xl mb-3 bg-gray-50">
+            <input type="file" name="qr_image" accept="image/*"
+                   class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-brand-50 file:text-brand-700">
+            <p class="text-xs text-gray-400 mt-1">อัปโหลด QR PromptPay ของร้าน (JPG, PNG)</p>
+        </div>
+        <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl transition font-medium">
+            บันทึกการตั้งค่า
+        </button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}
+{{ "แก้ไขหมวดหมู่" if category else "เพิ่มหมวดหมู่" }}
+{% endblock %}
+
+
+{% block admin_content %}
+
+<div class="max-w-xl">
+
+    <!-- Header -->
+
+    <div class="mb-6">
+
+        <h1 class="text-3xl font-bold">
+
+            {{ "แก้ไขหมวดหมู่" if category else "เพิ่มหมวดหมู่" }}
+
+        </h1>
+
+        <p class="text-gray-500 mt-2">
+
+            {{
+                "แก้ไขชื่อหมวดหมู่สินค้า"
+                if category
+                else
+                "เพิ่มหมวดหมู่ใหม่สำหรับสินค้า"
+            }}
+
+        </p>
+
+    </div>
+
+
+    <!-- Form -->
+
+    <div class="bg-white rounded-xl shadow border p-6">
+
+        <form method="POST">
+
+
+            <!-- ชื่อหมวดหมู่ -->
+
+            <div>
+
+                <label
+                    for="name"
+                    class="block mb-2 font-medium"
+                >
+
+                    ชื่อหมวดหมู่
+
+                </label>
+
+
+                <input
+                    id="name"
+                    type="text"
+                    name="name"
+                    required
+                    maxlength="100"
+                    value="{{ category.name if category else '' }}"
+                    placeholder="เช่น Arduino"
+                    class="w-full border rounded-lg px-4 py-3
+                           focus:outline-none focus:ring-2
+                           focus:ring-blue-500"
+                >
+
+            </div>
+
+
+            <!-- Buttons -->
+
+            <div class="mt-6 flex gap-3">
+
+                <button
+                    type="submit"
+                    class="bg-blue-600 hover:bg-blue-700
+                           text-white px-6 py-3 rounded-lg"
+                >
+
+                    บันทึก
+
+                </button>
+
+
+                <a
+                    href="{{ url_for('admin_categories') }}"
+                    class="bg-gray-200 hover:bg-gray-300
+                           px-6 py-3 rounded-lg"
+                >
+
+                    ยกเลิก
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

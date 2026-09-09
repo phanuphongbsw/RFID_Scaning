@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backoffice Login — ร้านเสื้อผ้า</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Prompt', sans-serif; }</style>
+</head>
+<body class="bg-gray-900 min-h-screen flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+        <div class="text-center mb-8">
+            <p class="text-xs text-gray-400 uppercase tracking-widest mb-2">Backoffice</p>
+            <h1 class="text-2xl font-bold text-gray-800">เข้าสู่ระบบแอดมิน</h1>
+            <p class="text-gray-500 text-sm mt-2">สำหรับผู้ดูแลระบบเท่านั้น</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="mb-4 space-y-2">
+                {% for category, message in messages %}
+                <div class="px-4 py-3 rounded-lg text-sm
+                    {% if category == 'success' %}bg-green-50 text-green-700
+                    {% elif category == 'error' %}bg-red-50 text-red-700
+                    {% else %}bg-yellow-50 text-yellow-700{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้ใช้</label>
+                <input type="text" name="username" required autofocus
+                       class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label>
+                <input type="password" name="password" required
+                       class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="submit" class="w-full bg-gray-900 hover:bg-gray-800 text-white py-3 rounded-xl transition font-medium">
+                เข้าสู่ระบบ
+            </button>
+        </form>
+
+        <p class="text-center text-sm text-gray-400 mt-6">
+            <a href="{{ url_for('index') }}" class="hover:text-gray-600">← กลับหน้าร้าน</a>
+        </p>
+    </div>
+</body>
+</html>

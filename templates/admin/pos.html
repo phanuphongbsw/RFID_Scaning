@@ -1,0 +1,692 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}POS{% endblock %}
+
+{% block admin_content %}
+
+<h1 class="text-2xl font-bold mb-6">ระบบ POS</h1>
+
+<!-- ข้อมูลลูกค้า -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+    <input
+        id="customer_name"
+        class="border rounded p-2"
+        placeholder="ชื่อลูกค้า"
+    >
+
+    <input
+        id="customer_phone"
+        class="border rounded p-2"
+        placeholder="เบอร์โทร"
+    >
+
+    <input
+        id="customer_address"
+        class="border rounded p-2"
+        placeholder="ที่อยู่"
+    >
+
+</div>
+
+
+<!-- ค้นหาสินค้า -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+
+    <input
+        id="searchProduct"
+        class="w-full border rounded p-2"
+        placeholder="ค้นหาสินค้า..."
+        oninput="filterProducts()"
+    >
+
+    <select
+        id="categoryFilter"
+        class="w-full border rounded p-2"
+        onchange="filterProducts()"
+    >
+
+        <option value="">ทุกหมวดหมู่</option>
+
+        {% for category in categories %}
+
+        <option value="{{ category.id }}">
+            {{ category.name }}
+        </option>
+
+        {% endfor %}
+
+    </select>
+
+</div>
+
+
+<!-- ตารางสินค้า -->
+<div class="bg-white rounded-xl shadow overflow-auto mb-8">
+
+    <table class="w-full border text-sm">
+
+        <thead class="bg-gray-100">
+
+            <tr>
+
+                <th class="p-2">รูป</th>
+                <th class="p-2">สินค้า</th>
+                <th class="p-2">คงเหลือ</th>
+                <th class="p-2">ราคา</th>
+                <th class="p-2">เพิ่มลงตะกร้า</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody id="productBody"></tbody>
+
+    </table>
+
+</div>
+
+
+<!-- ตารางตะกร้า -->
+<div class="bg-white rounded-xl shadow p-5">
+
+    <table class="w-full border">
+
+        <thead class="bg-gray-100">
+
+            <tr>
+
+                <th class="p-2">รูป</th>
+                <th class="p-2">สินค้า</th>
+                <th class="p-2">ราคา</th>
+                <th class="p-2">จำนวน</th>
+                <th class="p-2">รวม</th>
+                <th class="p-2">จัดการ</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody id="cartBody"></tbody>
+
+    </table>
+
+
+    <div class="text-right mt-5">
+
+        <h2 class="text-xl font-bold">
+
+            รวม :
+            <span id="totalPrice">0</span>
+            บาท
+
+        </h2>
+
+
+        <button
+            onclick="pay()"
+            class="mt-4 bg-green-600 text-white px-5 py-2 rounded"
+        >
+
+            ชำระเงิน
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // =========================================================
+    // ข้อมูลสินค้า
+    // =========================================================
+
+    let allProducts = JSON.parse(
+        '{{ products | tojson | safe }}'
+    );
+
+
+    // =========================================================
+    // ล้างตารางสินค้า
+    // =========================================================
+
+    function loadProductsFromDOM() {
+
+        document.getElementById("productBody").innerHTML = "";
+
+    }
+
+
+    // =========================================================
+    // แสดงสินค้า
+    // =========================================================
+
+    function renderProducts(list) {
+
+        const tbody =
+            document.getElementById("productBody");
+
+        tbody.innerHTML = "";
+
+
+        list.forEach(p => {
+
+            tbody.innerHTML += `
+
+                <tr>
+
+                    <td class="border p-2">
+
+                        <img
+                            src="${p.image || '/static/default.png'}"
+                            class="w-14 h-14 object-cover rounded"
+                        >
+
+                    </td>
+
+
+                    <td class="border p-2">
+
+                        ${p.name}
+
+                    </td>
+
+
+                    <td class="border p-2">
+
+                        ${p.stock}
+
+                    </td>
+
+
+                    <td class="border p-2">
+
+                        ${p.price}
+
+                    </td>
+
+
+                    <td class="border p-2">
+
+                        <button
+                            onclick="addToCart(${p.id})"
+                            class="bg-blue-600 text-white px-3 py-1 rounded"
+                        >
+
+                            เพิ่ม
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+            `;
+
+        });
+
+    }
+
+
+    // =========================================================
+    // ค้นหา / กรองสินค้า
+    // =========================================================
+
+    function filterProducts() {
+
+        const keyword = document
+            .getElementById("searchProduct")
+            .value
+            .trim()
+            .toLowerCase();
+
+
+        const categoryId = document
+            .getElementById("categoryFilter")
+            .value;
+
+
+        // -----------------------------------------------------
+        // ถ้าไม่ได้ค้นหาและไม่ได้เลือกหมวดหมู่
+        // ไม่แสดงสินค้าทั้งหมด
+        // -----------------------------------------------------
+
+        if (!keyword && !categoryId) {
+
+            renderProducts([]);
+
+            return;
+
+        }
+
+
+        // -----------------------------------------------------
+        // กรองสินค้า
+        // -----------------------------------------------------
+
+        const filtered = allProducts.filter(p => {
+
+
+            // ตรวจสอบชื่อสินค้า
+
+            const matchName =
+                !keyword ||
+                p.name.toLowerCase().includes(keyword);
+
+
+            // ตรวจสอบหมวดหมู่
+
+            const matchCategory =
+                !categoryId ||
+                String(p.category_id) === String(categoryId);
+
+
+            return matchName && matchCategory;
+
+        });
+
+
+        // -----------------------------------------------------
+        // แสดงผลลัพธ์
+        // -----------------------------------------------------
+
+        renderProducts(filtered);
+
+    }
+
+
+    // =========================================================
+    // เพิ่มสินค้าเข้าตะกร้า
+    // =========================================================
+
+    async function addToCart(productId) {
+
+        const res = await fetch(
+            "/api/admin/cart/add",
+            {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    product_id: productId,
+
+                    quantity: 1
+
+                })
+
+            }
+        );
+
+
+        const data = await res.json();
+
+
+        if (!data.success) {
+
+            alert(
+                data.message ||
+                "ไม่สามารถเพิ่มสินค้าได้"
+            );
+
+        }
+
+
+        // อัปเดตตะกร้าทันที
+
+        loadCart();
+
+    }
+
+
+    // =========================================================
+    // แก้ไขจำนวนสินค้า
+    // =========================================================
+
+    async function updateQty(id) {
+
+        let qty = parseInt(
+            document
+                .getElementById(`qty-${id}`)
+                .value
+        );
+
+
+        if (isNaN(qty) || qty < 1) {
+
+            qty = 1;
+
+        }
+
+
+        await fetch(
+            "/api/admin/cart/update",
+            {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    product_id: id,
+
+                    quantity: qty
+
+                })
+
+            }
+        );
+
+
+        loadCart();
+
+    }
+
+
+    // =========================================================
+    // ลบสินค้าออกจากตะกร้า
+    // =========================================================
+
+    async function removeItem(id) {
+
+        if (
+            !confirm(
+                "ลบสินค้านี้ออกจากตะกร้า?"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        await fetch(
+            "/api/admin/cart/remove",
+            {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    product_id: id
+
+                })
+
+            }
+        );
+
+
+        loadCart();
+
+    }
+
+
+    // =========================================================
+    // โหลดตะกร้า
+    // =========================================================
+    // ฟังก์ชันนี้ใช้ร่วมกับระบบ RFID
+    // =========================================================
+
+    async function loadCart() {
+
+        const res =
+            await fetch("/api/admin/cart");
+
+
+        const data =
+            await res.json();
+
+
+        let html = "";
+
+        let total = 0;
+
+
+        data.cart.forEach(item => {
+
+
+            total +=
+                item.price *
+                item.quantity;
+
+
+            html += `
+
+                <tr>
+
+
+                    <td class="border p-2">
+
+                        <img
+                            src="${item.image || '/static/default.png'}"
+                            class="w-16 h-16 object-cover rounded"
+                        >
+
+                    </td>
+
+
+                    <td class="border p-2">
+
+                        ${item.name}
+
+                        <br>
+
+                        <span class="text-xs text-gray-500">
+
+                            คงเหลือ ${item.stock}
+
+                        </span>
+
+                    </td>
+
+
+                    <td class="border p-2">
+
+                        ${item.price}
+
+                    </td>
+
+
+                    <td class="border p-2">
+
+                        <input
+                            id="qty-${item.id}"
+                            type="number"
+                            min="1"
+                            max="${item.stock}"
+                            value="${item.quantity}"
+                            class="w-20 border rounded text-center"
+                        >
+
+
+                        <button
+                            onclick="updateQty(${item.id})"
+                            class="bg-blue-500 text-white px-2 py-1 rounded ml-2"
+                        >
+
+                            บันทึก
+
+                        </button>
+
+                    </td>
+
+
+                    <td class="border p-2">
+
+                        ${
+                            item.price *
+                            item.quantity
+                        }
+
+                    </td>
+
+
+                    <td class="border p-2">
+
+                        <button
+                            onclick="removeItem(${item.id})"
+                            class="bg-red-500 text-white px-3 py-1 rounded"
+                        >
+
+                            ลบ
+
+                        </button>
+
+                    </td>
+
+
+                </tr>
+
+            `;
+
+        });
+
+
+        document.getElementById(
+            "cartBody"
+        ).innerHTML = html;
+
+
+        document.getElementById(
+            "totalPrice"
+        ).innerText = total;
+
+    }
+
+
+    // =========================================================
+    // ชำระเงิน
+    // =========================================================
+
+    async function pay() {
+
+        if (
+            !confirm(
+                "ยืนยันการชำระเงิน?"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        const res = await fetch(
+            "/api/admin/payment",
+            {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    customer_name:
+                        document
+                            .getElementById(
+                                "customer_name"
+                            )
+                            .value,
+
+                    customer_phone:
+                        document
+                            .getElementById(
+                                "customer_phone"
+                            )
+                            .value,
+
+                    customer_address:
+                        document
+                            .getElementById(
+                                "customer_address"
+                            )
+                            .value
+
+                })
+
+            }
+        );
+
+
+        const data =
+            await res.json();
+
+
+        alert(data.message);
+
+
+        if (data.success) {
+
+
+            document.getElementById(
+                "customer_name"
+            ).value = "";
+
+
+            document.getElementById(
+                "customer_phone"
+            ).value = "";
+
+
+            document.getElementById(
+                "customer_address"
+            ).value = "";
+
+
+            loadCart();
+
+        }
+
+    }
+
+
+    // =========================================================
+    // เมื่อเปิดหน้า POS
+    // =========================================================
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        () => {
+
+
+            // ไม่แสดงสินค้าทั้งหมดตอนเปิดหน้า
+
+            loadProductsFromDOM();
+
+
+            // โหลดตะกร้า
+
+            loadCart();
+
+
+            // -------------------------------------------------
+            // ดึงตะกร้าทุก 1 วินาที
+            // เพื่อรองรับ RFID
+            // -------------------------------------------------
+
+            setInterval(
+                loadCart,
+                1000
+            );
+
+        }
+    );
+
+</script>
+
+{% endblock %}

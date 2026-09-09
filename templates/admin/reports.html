@@ -1,0 +1,176 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}รายงานยอดขาย — ร้าน IT{% endblock %}
+
+{% block admin_content %}
+
+<div class="flex items-center justify-between mb-6">
+
+    <h1 class="text-2xl font-bold text-gray-800">
+
+        {{ title }}
+
+    </h1>
+
+    <div class="flex gap-2">
+
+        <a href="{{ url_for('admin_reports_export') }}"
+           class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm">
+
+            📄 Export Excel
+
+        </a>
+
+        <a href="{{ url_for('admin_reports', period='daily') }}"
+           class="px-4 py-2 rounded-lg text-sm
+           {% if period=='daily' %}
+           bg-brand-600 text-white
+           {% else %}
+           bg-white border border-gray-200 text-gray-600 hover:bg-gray-50
+           {% endif %}">
+
+            รายวัน
+
+        </a>
+
+        <a href="{{ url_for('admin_reports', period='monthly') }}"
+           class="px-4 py-2 rounded-lg text-sm
+           {% if period=='monthly' %}
+           bg-brand-600 text-white
+           {% else %}
+           bg-white border border-gray-200 text-gray-600 hover:bg-gray-50
+           {% endif %}">
+
+            รายเดือน
+
+        </a>
+
+    </div>
+
+</div>
+
+<div class="grid grid-cols-2 gap-4 mb-6">
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+
+        <p class="text-sm text-gray-500">
+
+            ยอดขายรวม
+
+        </p>
+
+        <p class="text-2xl font-bold text-brand-600 mt-1">
+
+            ฿{{ "%.2f"|format(grand_total) }}
+
+        </p>
+
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+
+        <p class="text-sm text-gray-500">
+
+            จำนวนคำสั่งซื้อ
+
+        </p>
+
+        <p class="text-2xl font-bold text-gray-800 mt-1">
+
+            {{ grand_count }}
+
+        </p>
+
+    </div>
+
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+<div class="overflow-x-auto">
+
+<table class="w-full text-sm">
+
+<thead>
+
+<tr class="bg-gray-50 border-b">
+
+<th class="px-6 py-4">
+
+{% if period=="monthly" %}
+
+เดือน
+
+{% else %}
+
+วันที่
+
+{% endif %}
+
+</th>
+
+<th class="px-6 py-4">
+
+จำนวนคำสั่งซื้อ
+
+</th>
+
+<th class="px-6 py-4">
+
+ยอดขาย
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for row in sales_data %}
+
+<tr class="border-b hover:bg-gray-50">
+
+<td class="px-6 py-4">
+
+{{ row.period }}
+
+</td>
+
+<td class="px-6 py-4">
+
+{{ row.count }}
+
+</td>
+
+<td class="px-6 py-4 text-brand-600 font-semibold">
+
+฿{{ "%.2f"|format(row.total or 0) }}
+
+</td>
+
+</tr>
+
+{% else %}
+
+<tr>
+
+<td colspan="3"
+class="text-center py-12 text-gray-400">
+
+ยังไม่มีข้อมูล
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+{% endblock %}
