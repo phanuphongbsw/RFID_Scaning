@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}คำสั่งซื้อ #{{ order.id }} — ร้านเสื้อผ้า{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <a href="{{ url_for('orders') }}" class="text-brand-600 hover:text-brand-700 text-sm mb-6 inline-flex items-center gap-1">
+        ← กลับประวัติการสั่งซื้อ
+    </a>
+
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">คำสั่งซื้อ #{{ order.id }}</h1>
+        <span class="px-4 py-2 rounded-full text-sm font-medium
+            {% if order.status == 'completed' %}bg-green-100 text-green-700
+            {% elif order.status == 'cancelled' %}bg-red-100 text-red-700
+            {% elif order.status == 'pending' %}bg-yellow-100 text-yellow-700
+            {% elif order.status == 'awaiting_verification' %}bg-orange-100 text-orange-700
+            {% else %}bg-blue-100 text-blue-700{% endif %}">
+            {{ order.status_label }}
+        </span>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 class="font-semibold text-gray-800 mb-4">📍 ติดตามสถานะ</h2>
+        <div class="flex items-center justify-between relative overflow-x-auto">
+            {% set steps = [('pending', 'รอชำระ'), ('awaiting_verification', 'ตรวจสลิป'), ('paid', 'ชำระแล้ว'), ('processing', 'จัดเตรียม'), ('shipped', 'จัดส่ง'), ('completed', 'สำเร็จ')] %}
+            {% set status_order = ['pending', 'awaiting_verification', 'paid', 'processing', 'shipped', 'completed'] %}
+            {% set current_idx = status_order.index(order.status) if order.status in status_order else -1 %}
+            {% for step_key, step_label in steps %}
+            <div class="flex flex-col items-center z-10 min-w-[60px]">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
+                    {% if loop.index0 <= current_idx %}bg-brand-600 text-white{% else %}bg-gray-200 text-gray-400{% endif %}">
+                    {{ loop.index }}
+                </div>
+                <span class="text-xs mt-2 text-center {% if loop.index0 <= current_idx %}text-brand-600 font-medium{% else %}text-gray-400{% endif %}">{{ step_label }}</span>
+            </div>
+            {% if not loop.last %}
+            <div class="flex-1 h-0.5 {% if loop.index0 < current_idx %}bg-brand-600{% else %}bg-gray-200{% endif %} -mt-6 min-w-[20px]"></div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if order.status == 'pending' %}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <h2 class="text-lg font-semibold text-gray-800">💳 ชำระเงินผ่าน PromptPay</h2>
+            {% if not order.is_payment_expired %}
+            <div class="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-2">
+                <span class="text-sm text-red-600">⏱ เหลือเวลา:</span>
+                <span id="countdown" class="font-bold text-red-600 text-lg tabular-nums"
+                      data-seconds="{{ order.payment_seconds_left }}">--:--</span>
+            </div>
+            {% else %}
+            <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-2 text-red-600 text-sm font-medium">
+                หมดเวลาชำระเงินแล้ว
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="text-center mb-6">
+            <p class="text-gray-500 text-sm mb-2">ยอดที่ต้องชำระ</p>
+            <p class="text-3xl font-bold text-brand-600">฿{{ "%.2f"|format(order.total) }}</p>
+            {% if settings.promptpay_name %}
+            <p class="text-gray-600 mt-2">{{ settings.promptpay_name }}</p>
+            {% endif %}
+            {% if settings.promptpay_number %}
+            <p class="text-gray-500 text-sm mt-1">PromptPay: {{ settings.promptpay_number }}</p>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-center mb-8">
+            <div class="p-4 bg-white border-2 border-gray-200 rounded-2xl">
+                <img src="{{ settings.qr_image | product_image }}" alt="QR PromptPay" class="w-48 h-48 mx-auto object-contain">
+            </div>
+        </div>
+
+        {% if not order.is_payment_expired %}
+        <form action="{{ url_for('upload_slip', order_id=order.id) }}" method="POST" enctype="multipart/form-data"
+              class="max-w-md mx-auto space-y-4 border-t border-gray-100 pt-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">อัปโหลดสลิปการโอนเงิน</label>
+                <input type="file" name="payment_slip" accept="image/*" required
+                       class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-brand-50 file:text-brand-700">
+                <p class="text-xs text-gray-400 mt-1">รองรับ JPG, PNG (สูงสุด 5MB)</p>
+            </div>
+            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl transition font-medium">
+                📎 ส่งสลิปยืนยันการชำระเงิน
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    {% elif order.status == 'awaiting_verification' %}
+    <div class="bg-orange-50 border border-orange-200 rounded-2xl p-6 mb-6 text-center">
+        <p class="text-orange-700 font-medium">📎 ได้รับสลิปแล้ว รอแอดมินตรวจสอบ</p>
+        {% if order.payment_slip %}
+        <img src="{{ url_for('static', filename='slips/' + order.payment_slip) }}" alt="สลิป" class="max-h-48 mx-auto mt-4 rounded-lg border">
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 class="font-semibold text-gray-800 mb-4">รายการสินค้า</h2>
+            <div class="space-y-3">
+                {% for item in order.items %}
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">{{ item.product.name }} x{{ item.quantity }}</span>
+                    <span class="font-medium">฿{{ "%.2f"|format(item.subtotal) }}</span>
+                </div>
+                {% endfor %}
+                <hr>
+                <div class="flex justify-between font-bold">
+                    <span>ยอดรวม</span>
+                    <span class="text-brand-600">฿{{ "%.2f"|format(order.total) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 class="font-semibold text-gray-800 mb-4">ข้อมูลจัดส่ง</h2>
+            <div class="space-y-2 text-sm text-gray-600">
+                <p><span class="font-medium text-gray-800">ชื่อ:</span> {{ order.shipping_name }}</p>
+                <p><span class="font-medium text-gray-800">โทร:</span> {{ order.shipping_phone }}</p>
+                <p><span class="font-medium text-gray-800">ที่อยู่:</span> {{ order.shipping_address }}</p>
+                <p><span class="font-medium text-gray-800">วันที่สั่ง:</span> {{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if order.status == 'pending' and not order.is_payment_expired %}
+<script>
+(function() {
+    const el = document.getElementById('countdown');
+    if (!el) return;
+    let seconds = parseInt(el.dataset.seconds, 10);
+    function tick() {
+        if (seconds <= 0) {
+            el.textContent = '00:00';
+            location.reload();
+            return;
+        }
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        el.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        seconds--;
+        setTimeout(tick, 1000);
+    }
+    tick();
+})();
+</script>
+{% endif %}
+{% endblock %}

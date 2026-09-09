@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ร้าน IT{% endblock %}</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: "#eff6ff",
+                            100: "#dbeafe",
+                            500: "#3b82f6",
+                            600: "#2563eb",
+                            700: "#1d4ed8"
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+<!-- ===== NAVBAR ===== -->
+<nav class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+
+            <!-- ซ้าย -->
+            <div class="flex items-center gap-4">
+
+                <!-- Hamburger Mobile -->
+                <button id="mobile-menu-btn" class="lg:hidden text-3xl text-brand-600">
+                    ☰
+                </button>
+
+                <!-- Logo -->
+                <a href="{{ url_for('index') }}" class="text-2xl font-bold text-brand-600">
+                    ร้าน IT
+                </a>
+
+                <!-- Desktop Menu -->
+                <div class="hidden lg:flex items-center gap-6">
+
+                    <a href="{{ url_for('index') }}" class="hover:text-brand-600">หน้าแรก</a>
+
+                    <!-- Category Dropdown -->
+                    <div class="relative group">
+                        <button type="button" class="flex items-center gap-1 hover:text-brand-600 py-5">
+                            หมวดหมู่
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div
+                            class="absolute left-0 top-full invisible opacity-0
+                                   group-hover:visible group-hover:opacity-100
+                                   transition duration-150
+                                   bg-white shadow-xl rounded-xl w-60 border z-50
+                                   max-h-80 overflow-y-auto">
+
+                            <a href="{{ url_for('index') }}" class="block px-4 py-3 hover:bg-blue-50">
+                                สินค้าทั้งหมด
+                            </a>
+
+                            {% for category in categories %}
+                            <a href="{{ url_for('index', category=category.id) }}"
+                               class="block px-4 py-3 hover:bg-blue-50">
+                                {{ category.name }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {% if current_user.is_authenticated and not current_user.is_admin %}
+                    <a href="{{ url_for('orders') }}" class="hover:text-brand-600">
+                        ประวัติการสั่งซื้อ
+                    </a>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <!-- ขวา -->
+            <div class="flex items-center gap-4">
+
+                <!-- Cart -->
+                <a href="{{ url_for('cart') }}" class="relative p-2 hover:text-brand-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293
+                                 2.293c-.63.63-.184 1.707.707
+                                 1.707H17m0 0a2 2 0 100 4
+                                 2 2 0 000-4zm-8 2a2 2 0
+                                 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+
+                    {% if cart_count > 0 %}
+                    <span
+                        class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs
+                               w-5 h-5 flex items-center justify-center">
+                        {{ cart_count }}
+                    </span>
+                    {% endif %}
+                </a>
+
+                <!-- Auth -->
+                {% if current_user.is_authenticated %}
+                    <span class="hidden md:inline text-sm">{{ current_user.username }}</span>
+                    <a href="{{ url_for('logout') }}"
+                       class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">
+                        ออกจากระบบ
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="hover:text-brand-600">เข้าสู่ระบบ</a>
+                    <a href="{{ url_for('register') }}"
+                       class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg">
+                        สมัครสมาชิก
+                    </a>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden lg:hidden bg-white border-t">
+        <a href="{{ url_for('index') }}" class="block px-5 py-3 hover:bg-gray-100">หน้าแรก</a>
+
+        <div class="border-t">
+            <div class="px-5 py-3 font-semibold">หมวดหมู่</div>
+
+            <a href="{{ url_for('index') }}" class="block px-8 py-2 hover:bg-gray-100">
+                สินค้าทั้งหมด
+            </a>
+
+            {% for category in categories %}
+            <a href="{{ url_for('index', category=category.id) }}"
+               class="block px-8 py-2 hover:bg-gray-100">
+                {{ category.name }}
+            </a>
+            {% endfor %}
+        </div>
+
+        {% if current_user.is_authenticated %}
+            {% if not current_user.is_admin %}
+            <a href="{{ url_for('orders') }}" class="block px-5 py-3 hover:bg-gray-100">
+                ประวัติการสั่งซื้อ
+            </a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" class="block px-5 py-3 hover:bg-gray-100">
+                ออกจากระบบ
+            </a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="block px-5 py-3 hover:bg-gray-100">
+                เข้าสู่ระบบ
+            </a>
+            <a href="{{ url_for('register') }}" class="block px-5 py-3 hover:bg-gray-100">
+                สมัครสมาชิก
+            </a>
+        {% endif %}
+    </div>
+</nav>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="max-w-7xl mx-auto px-4 mt-5 space-y-2">
+    {% for category, message in messages %}
+    <div class="px-4 py-3 rounded-lg
+        {% if category == 'success' %} bg-green-100 text-green-700
+        {% elif category == 'error' %} bg-red-100 text-red-700
+        {% elif category == 'warning' %} bg-yellow-100 text-yellow-700
+        {% else %} bg-blue-100 text-blue-700
+        {% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- Main Content -->
+<main class="flex-1">
+    {% block content %}{% endblock %}
+</main>
+
+<!-- Footer -->
+<footer class="bg-white border-t mt-10">
+    <div class="max-w-7xl mx-auto py-8 text-center text-gray-500">
+        © 2026 ร้าน IT
+    </div>
+</footer>
+
+<script>
+    const btn = document.getElementById("mobile-menu-btn");
+    const menu = document.getElementById("mobile-menu");
+    if (btn && menu) {
+        btn.addEventListener("click", () => {
+            menu.classList.toggle("hidden");
+        });
+    }
+</script>
+
+</body>
+</html>
